@@ -67,8 +67,9 @@ into the app's user-data directory the first time you enable them.
 | `npm run dist:mac` | macOS zip |
 | `npm run fetch:electron` | retry the Electron binary download explicitly |
 
-Packaging scripts must run on the target OS (or a suitable CI runner) with
-network access to Electron's release assets.
+GitHub Releases include packaged desktop builds produced by the `Desktop release`
+workflow on Windows, macOS, and Linux runners. To build locally, run the packaging
+scripts on the target OS with network access to Electron's release assets.
 
 ## Using it
 

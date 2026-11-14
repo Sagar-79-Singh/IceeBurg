@@ -1,0 +1,107 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            script: dist:linux
+            artifact: linux
+          - name: Windows
+            os: windows-latest
+            script: dist:win
+            artifact: windows
+          - name: macOS
+            os: macos-latest
+            script: dist:mac
+            artifact: macos
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        if: matrix.os == 'ubuntu-latest'
+        run: npm test
+
+      - name: Package
+        run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          APPLE_ID: ''
+          APPLE_APP_SPECIFIC_PASSWORD: ''
+          TEAM_ID: ''
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: iceeburg-${{ matrix.artifact }}
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish release assets
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List assets
+        run: ls -lh dist
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --title "IceeBurg $TAG" \
+              --notes-file .github/RELEASE_NOTES.md \
+              --latest
+          fi
