@@ -108,8 +108,10 @@ instead of crashing.
 - `index.html` + `style.css` + `renderer.ts` are the whole HUD. Colours come from
   the CSS variables in `:root` (the JARVIS teal palette); the live accent setting
   rewrites `--pri` and friends. Do not hard-code colours outside the palette.
-- The renderer is bundled by esbuild to `build/renderer.js`; it must stay free of
-  Node imports. Anything it needs from the main process goes through a new
+- The renderer and preload are bundled by esbuild as **IIFE** scripts
+  (`build/renderer.js`, `build/preload.js`). They run where `module`/`exports` do
+  not exist; never emit CommonJS for them. The renderer must stay free of Node
+  imports. Anything it needs from the main process goes through a new
   allowlisted IPC channel in `src/preload.ts` **and** `src/main.ts`.
 - The face mesh is shipped as `assets/face_model.obj` and read through the
   `face-mesh` IPC channel; do not `fetch()` local files from the renderer.

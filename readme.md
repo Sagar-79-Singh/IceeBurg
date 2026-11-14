@@ -59,7 +59,8 @@ into the app's user-data directory the first time you enable them.
 |---|---|
 | `npm run build` | esbuild → `build/{main,preload,renderer,runtime}.js` + HUD assets |
 | `npm run typecheck` | strict TypeScript check (`tsc --noEmit`) |
-| `npm test` | build + Node test suite (core, actions, engines, network, packaging) |
+| `npm test` | build + Node test suite (core, actions, engines, network, packaging, renderer/preload boot) |
+| `npm run smoke:hud` | real Electron HUD boot check (use `xvfb-run -a` on headless Linux) |
 | `npm start` / `npm run dev` | build + launch Electron |
 | `npm run pack` | unpacked electron-builder directory |
 | `npm run dist:linux` | AppImage + deb |

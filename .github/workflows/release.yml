@@ -54,6 +54,13 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: npm test
 
+      - name: Real Electron HUD smoke test
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run -a npm run smoke:hud
+
       - name: Package
         run: npm run ${{ matrix.script }}
         env:

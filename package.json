@@ -1,6 +1,6 @@
 {
   "name": "iceeburg",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MARK LVII \u2014 cross-platform personal AI assistant, now in TypeScript and Electron",
   "main": "build/main.js",
   "author": {
@@ -26,7 +26,8 @@
     "dist:win": "npm run build && electron-builder --win nsis zip --publish never",
     "dist:mac": "npm run build && electron-builder --mac dmg zip --x64 --arm64 --publish never",
     "postinstall": "node scripts/postinstall.mjs",
-    "fetch:electron": "node scripts/fetch-electron.mjs"
+    "fetch:electron": "node scripts/fetch-electron.mjs",
+    "smoke:hud": "electron scripts/smoke-hud.cjs"
   },
   "dependencies": {
     "@google/genai": "3.3.0",
@@ -53,6 +54,7 @@
     "sherpa-onnx-node": "1.12.40"
   },
   "devDependencies": {
+    "@electron/get": "2.0.3",
     "@types/adm-zip": "0.5.7",
     "@types/node": "22.19.1",
     "@types/qrcode": "1.5.6",
@@ -60,9 +62,9 @@
     "electron": "39.2.7",
     "electron-builder": "26.0.12",
     "esbuild": "0.27.0",
-    "typescript": "5.9.3",
     "extract-zip": "2.0.1",
-    "@electron/get": "2.0.3"
+    "jsdom": "31.0.1",
+    "typescript": "5.9.3"
   },
   "build": {
     "appId": "com.sagar79singh.iceeburg",
