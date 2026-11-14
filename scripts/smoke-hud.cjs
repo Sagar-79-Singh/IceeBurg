@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const errors = [];
-let win, ready = false, finished = false;
+let win, ready = false, finished = false, lastResult = null;
 const timer = setTimeout(() => fail('HUD did not become ready within 20s'), 20000);
 function fail(message) {
   if (finished) return;
@@ -13,6 +13,7 @@ function fail(message) {
   clearTimeout(timer);
   console.error('HUD_SMOKE_FAIL: ' + message);
   for (const e of errors) console.error('  ' + e);
+  try { require('node:fs').writeFileSync(require('node:path').join(process.cwd(), 'hud-smoke-failure.json'), JSON.stringify({ message, errors, result: lastResult }, null, 2)); } catch {}
   app.exit(1);
 }
 function ok(result) {
@@ -33,7 +34,7 @@ app.whenReady().then(() => {
     win.webContents.send('hud:state', { state: 'LISTENING' });
   });
   win = new BrowserWindow({
-    show: false,
+    show: true,
     width: 1180,
     height: 780,
     webPreferences: {
@@ -42,6 +43,7 @@ app.whenReady().then(() => {
       nodeIntegration: false,
       sandbox: true,
       webSecurity: true,
+      backgroundThrottling: false,
     },
   });
   win.webContents.on('preload-error', (_e, file, error) => errors.push(`preload ${file}: ${error.message}`));
@@ -67,6 +69,7 @@ app.whenReady().then(() => {
         cpu: document.getElementById('cpu-value').textContent,
         log: document.getElementById('activity-log').textContent
       })`);
+      lastResult = result;
       if (errors.length) return fail('console/preload errors: ' + errors.join(' | '));
       if (!result.ready || !result.bridge) return fail('renderer/preload did not boot: ' + JSON.stringify(result));
       if (result.state !== 'LISTENING') return fail('state not applied: ' + JSON.stringify(result));
