@@ -1,0 +1,997 @@
+[
+  {
+    "name": "system_status",
+    "description": "Returns real-time system metrics: CPU usage, RAM, GPU load, CPU temperature, uptime, and process count. Use when the user asks about computer performance, temperature, memory, or resource usage.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {}
+    }
+  },
+  {
+    "name": "screen_process",
+    "description": "Captures the screen or webcam image and lets you analyze it. MUST be called when user asks what is on screen, what you see, look at camera, analyze my screen, etc. You have NO visual ability without this tool. After the image is captured it is sent directly to you — describe what you see and answer the user's question. When using camera: the live view stays open until user says close it or calls close_camera.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "angle": {
+          "type": "STRING",
+          "description": "'screen' to capture display, 'camera' for webcam. Default: 'screen'"
+        },
+        "text": {
+          "type": "STRING",
+          "description": "The question or instruction about the captured image"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  {
+    "name": "close_camera",
+    "description": "Closes the live camera view shown on screen. Call when the user says (in ANY language): close camera, stop camera, turn off camera, that's creepy, etc.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {},
+      "required": []
+    }
+  },
+  {
+    "name": "manage_monitor",
+    "description": "Add, remove, or list background monitoring topics. JARVIS checks these topics once a day and alerts the user when there is a new development. Use 'add' when the user says 'monitor X', 'track X', 'follow X'. Use 'remove' when the user says 'stop monitoring X'. Use 'list' when the user asks what is being monitored. Do NOT add crypto, financial, or trading topics.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "add | remove | list"
+        },
+        "topic": {
+          "type": "STRING",
+          "description": "Topic to monitor or stop monitoring (e.g. 'space exploration', 'AI news')"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "shutdown_jarvis",
+    "description": "Shuts down the assistant completely. Call this when the user expresses intent to end the conversation, close the assistant, say goodbye, or stop Jarvis. The user can say this in ANY language.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {}
+    }
+  },
+  {
+    "name": "save_memory",
+    "description": "Save an important personal fact about the user to long-term memory. Call this silently whenever the user reveals something worth remembering: name, age, city, job, preferences, hobbies, relationships, projects, or future plans. Do NOT call for: weather, reminders, searches, or one-time commands. Do NOT announce that you are saving — just call it silently. Values must be in English regardless of the conversation language.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "category": {
+          "type": "STRING",
+          "description": "identity — name, age, birthday, city, job, language, nationality | preferences — favorite food/color/music/film/game/sport, hobbies | projects — active projects, goals, things being built | relationships — friends, family, partner, colleagues | wishes — future plans, things to buy, travel dreams | notes — habits, schedule, anything else worth remembering"
+        },
+        "key": {
+          "type": "STRING",
+          "description": "Short snake_case key (e.g. name, favorite_food, sister_name)"
+        },
+        "value": {
+          "type": "STRING",
+          "description": "Concise value in English (e.g. Fatih, pizza, older sister)"
+        }
+      },
+      "required": [
+        "category",
+        "key",
+        "value"
+      ]
+    }
+  },
+  {
+    "name": "recall_memory",
+    "description": "Look up a fact you have stored about the user but which is NOT in the memory block of your system prompt. The prompt lists the keys it did not have room for under '[ALSO REMEMBERED]' — if the user asks about anything named there, call this FIRST. Also call it before saying you do not know something personal, and when the user asks what you remember about them (leave query empty for everything). This is a local file search: it is instant and costs nothing.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "query": {
+          "type": "STRING",
+          "description": "Keyword to search for — a name, a topic, a category (e.g. 'ayse', 'coffee', 'projects'). Leave empty to list everything stored."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "undo",
+    "description": "Reverse the last change YOU made to this computer — a file you moved, renamed, created or wrote, or a setting you changed such as volume, brightness, dark mode or WiFi. Call this whenever the user says undo, revert, take it back, put it back, cancel that, or tells you that you did the wrong thing, in ANY language. Use action='list' when they ask what can be undone. This only covers your own actions — it is not the Ctrl+Z of whatever application is on screen (that is computer_settings with action 'undo').",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "undo (default) — reverse the last change | list — show what can be undone"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "background_tasks",
+    "description": "Long work that runs in the background on this computer while the conversation carries on: real research, reading and comparing many sources, writing a report, working through a list. For a quick answer the user is waiting for, use web_search instead. start = hand the task to an agent — agent 'researcher' for research (it plans, reads sources in full, checks every quote against the page and writes a cited report), 'general' for other work; task = the whole request, self-contained, in the user's words; minutes = the time budget when the user gives one ('research this for 10 minutes' -> 10); without one, 10 for research, more (20-40) when the user asks for something thorough or in depth; at = start later, 'YYYY-MM-DD HH:MM' or 'HH:MM' local time ('tonight at 2' -> '02:00'); file_path = a file to work from. After start, say in one short sentence that it is under way — the result is announced by itself when done. list = the tasks and their state; status = how one is going; result = a finished task's result; finish = stop now and write up what was found; cancel = stop without a result; steer = add an instruction to a running task (note); agents = the available agents. task_id may be left empty to mean the latest task.",
+    "brief": "Hands long work (research, reports) to a background agent: start, list, status, result, finish, cancel, steer.",
+    "tier": "core",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "enum": [
+            "start",
+            "list",
+            "status",
+            "result",
+            "finish",
+            "cancel",
+            "steer",
+            "agents"
+          ]
+        },
+        "task": {
+          "type": "STRING",
+          "description": "for start: the whole task, self-contained"
+        },
+        "agent": {
+          "type": "STRING",
+          "description": "for start: researcher | general"
+        },
+        "minutes": {
+          "type": "INTEGER",
+          "description": "for start: time budget in minutes"
+        },
+        "at": {
+          "type": "STRING",
+          "description": "for start: when to begin, local time"
+        },
+        "deliver": {
+          "type": "STRING",
+          "enum": [
+            "voice",
+            "panel",
+            "silent"
+          ],
+          "description": "for start: how to announce the result (default voice)"
+        },
+        "file_path": {
+          "type": "STRING",
+          "description": "for start: a file to work from"
+        },
+        "task_id": {
+          "type": "STRING"
+        },
+        "note": {
+          "type": "STRING",
+          "description": "for steer: the new instruction"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "browser_control",
+    "description": "Controls the web browser and everything INSIDE a web page: open an address, search, click, type, scroll, read the page, manage tabs, go back and forward. Anything happening on a website is this tool - it reads the page itself, which nothing else in the assistant can do. THIS TOOL OPENS THE BROWSER ITSELF. Never call open_app for the browser first - doing both launches it twice, the second copy on a different profile with none of the user's sign-ins. 'Open Chrome and go to YouTube' is ONE call to this tool. NEVER INVENT AN ADDRESS. Only pass a url you actually know. Anything belonging to the user personally - their own channel, profile, account page, inbox or playlist - has an address you do NOT know, and guessing a path produces an error page that looks like a working one. When the exact address is not known: open the site's own address (youtube.com, instagram.com) and get to the rest with smart_click on what the page shows, or use action='search', or ask the user. A guessed path is never acceptable. TO CLICK OR TYPE ON A PAGE, PREFER action='smart_click' or action='smart_type' with a 'description' of what the thing SAYS on screen - the visible label, in the page's own language. They search the page by role, label, placeholder and text and find it. Plain 'click' with a 'selector' needs a CSS selector that is exactly right for that site's markup, which is not something to guess at; use it only when the selector is known. For a job on a page that takes several steps - open a site, then find and click something on it - call 'screen_agent' instead: it plans the steps, calls this tool for each of them, and checks after every one that it actually worked. Read the status it returns. 'done' means it was confirmed - for an open, the url reported back is the page's OWN address, so if it differs from what was asked for the site redirected and the user should be told. 'unverified' means the address was handed to a browser that does not report back: whether the page loaded, redirected or does not exist is unknown, so say it was opened but NOT confirmed and never that the page is up. 'failed' means nothing happened.",
+    "brief": "Controls the web browser: open a URL, navigate, click, read the page.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "go_to | search | click | type | scroll | fill_form | smart_click | smart_type | get_text | get_url | press | new_tab | close_tab | screenshot | back | forward | reload | switch | list_browsers | close | close_all"
+        },
+        "browser": {
+          "type": "STRING",
+          "description": "Target browser: chrome | edge | firefox | opera | operagx | brave | vivaldi | safari. Omit to use the currently active browser."
+        },
+        "url": {
+          "type": "STRING",
+          "description": "URL for go_to / new_tab action"
+        },
+        "query": {
+          "type": "STRING",
+          "description": "Search query for search action"
+        },
+        "engine": {
+          "type": "STRING",
+          "description": "Search engine: google | bing | duckduckgo | yandex (default: google)"
+        },
+        "selector": {
+          "type": "STRING",
+          "description": "CSS selector for click/type"
+        },
+        "text": {
+          "type": "STRING",
+          "description": "Text to click or type"
+        },
+        "description": {
+          "type": "STRING",
+          "description": "Element description for smart_click/smart_type"
+        },
+        "direction": {
+          "type": "STRING",
+          "description": "up | down for scroll"
+        },
+        "amount": {
+          "type": "INTEGER",
+          "description": "Scroll amount in pixels (default: 500)"
+        },
+        "key": {
+          "type": "STRING",
+          "description": "Key name for press action (e.g. Enter, Escape, F5)"
+        },
+        "path": {
+          "type": "STRING",
+          "description": "Save path for screenshot"
+        },
+        "incognito": {
+          "type": "BOOLEAN",
+          "description": "Open in private/incognito mode"
+        },
+        "clear_first": {
+          "type": "BOOLEAN",
+          "description": "Clear field before typing (default: true)"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "code_helper",
+    "description": "Writes, edits, explains, runs, or builds code files.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "write | edit | explain | run | build | auto (default: auto)"
+        },
+        "description": {
+          "type": "STRING",
+          "description": "What the code should do or what change to make"
+        },
+        "language": {
+          "type": "STRING",
+          "description": "Programming language (default: python)"
+        },
+        "output_path": {
+          "type": "STRING",
+          "description": "Where to save the file"
+        },
+        "file_path": {
+          "type": "STRING",
+          "description": "Path to existing file for edit/explain/run/build"
+        },
+        "code": {
+          "type": "STRING",
+          "description": "Raw code string for explain"
+        },
+        "args": {
+          "type": "STRING",
+          "description": "CLI arguments for run/build"
+        },
+        "timeout": {
+          "type": "INTEGER",
+          "description": "Execution timeout in seconds (default: 30)"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "computer_control",
+    "description": "Direct computer control: type, click, hotkeys, scroll, move mouse, screenshots, find elements on screen, and CLOSE an application. Use action='close_app' with 'app_name' whenever the user asks to close, quit or exit a program - 'close Spotify', 'quit Chrome'. Always name the application in 'app_name'; there is no action that closes 'whatever is in front', because that is usually the assistant. To OPEN an application use the open_app tool instead. Read the status the tool returns: 'done' means it was confirmed, 'unverified' means it was requested and could NOT be confirmed - say so rather than claiming success - and 'ask' means nothing was done and the question must go to the user first.",
+    "brief": "Controls the computer: type, click, hotkeys, scroll, screenshots, and close_app to close a named application (put its name in 'app_name'). Use open_app to open one.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "type | smart_type | click | double_click | right_click | hotkey | press | scroll | move | copy | paste | screenshot | wait | clear_field | focus_window | close_app | screen_find | screen_click | random_data | user_data"
+        },
+        "app_name": {
+          "type": "STRING",
+          "description": "For close_app: the application to close, named as the user said it. Any application running on the machine works - there is no fixed list. Never leave this empty."
+        },
+        "confirmed": {
+          "type": "BOOLEAN",
+          "description": "For close_app: set true only after the tool asked which application was meant AND the user answered. Pass their answer in 'app_name'."
+        },
+        "text": {
+          "type": "STRING",
+          "description": "Text to type or paste"
+        },
+        "x": {
+          "type": "INTEGER",
+          "description": "X coordinate"
+        },
+        "y": {
+          "type": "INTEGER",
+          "description": "Y coordinate"
+        },
+        "keys": {
+          "type": "STRING",
+          "description": "Key combination e.g. 'ctrl+c'"
+        },
+        "key": {
+          "type": "STRING",
+          "description": "Single key e.g. 'enter'"
+        },
+        "direction": {
+          "type": "STRING",
+          "description": "up | down | left | right"
+        },
+        "amount": {
+          "type": "INTEGER",
+          "description": "Scroll amount (default: 3)"
+        },
+        "seconds": {
+          "type": "NUMBER",
+          "description": "Seconds to wait"
+        },
+        "title": {
+          "type": "STRING",
+          "description": "Window title for focus_window"
+        },
+        "description": {
+          "type": "STRING",
+          "description": "Element description for screen_find/screen_click"
+        },
+        "type": {
+          "type": "STRING",
+          "description": "Data type for random_data"
+        },
+        "field": {
+          "type": "STRING",
+          "description": "Field for user_data: name|email|city"
+        },
+        "clear_first": {
+          "type": "BOOLEAN",
+          "description": "Clear field before typing (default: true)"
+        },
+        "path": {
+          "type": "STRING",
+          "description": "Save path for screenshot"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "computer_settings",
+    "description": "Controls the computer: volume, mute, brightness, media playback (play/pause, next, previous, seek), window management, keyboard shortcuts, typing text on screen, fullscreen, dark mode, WiFi, restart, shutdown, scrolling, tab management, zoom, screenshots, lock screen, refresh/reload page. Use for ANY single computer control command. NUMBERS MATTER: a level the user names is volume_set / brightness_set with value = that level ('volume to 100', 'max' = 100, 'half' = 50); an amount to change by is volume_up / volume_down / brightness_up / brightness_down with value = the amount ('30 louder' = 30; no amount = 10). Never approximate a level with repeated up/down calls. For a key worth repeating (zoom_in, next_tab, go_back, page_down, undo...) pass `times`. Media keys reach music and video apps without focusing them; seek_forward / seek_backward take value = seconds and act on the app in front (for a video on the assistant's own display use video_player instead). restart, shutdown and toggle_wifi put a confirmation on the user's screen and do NOT happen until they press it — never claim they are done. Volume, mute, brightness and dark mode can be reversed with the `undo` tool.",
+    "brief": "Changes a computer setting: volume, brightness, WiFi, window layout, power. Name the action in 'action'.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "The exact action. Prefer this over `description` — pick one of: volume_set | volume_up | volume_down | mute | unmute | toggle_mute | brightness_set | brightness_up | brightness_down | sleep_display | media_play_pause | media_next | media_previous | media_stop | seek_forward | seek_backward | pause_video | close_window | full_screen | minimize | maximize | snap_left | snap_right | switch_window | show_desktop | task_manager | focus_search | refresh_page | close_tab | new_tab | next_tab | prev_tab | go_back | go_forward | zoom_in | zoom_out | zoom_reset | find_on_page | scroll_up | scroll_down | scroll_top | scroll_bottom | page_up | page_down | copy | paste | cut | undo | redo | select_all | save | enter | escape | press_key | type_text | screenshot | lock_screen | open_settings | file_explorer | open_run | dark_mode | toggle_wifi | restart | shutdown"
+        },
+        "description": {
+          "type": "STRING",
+          "description": "Fallback only, when no action name above fits. Resolved locally — no extra model call."
+        },
+        "value": {
+          "type": "STRING",
+          "description": "volume_set / brightness_set: the level, 0-100. volume_up/down, brightness_up/down: how much to change by (default 10). seek_forward/backward: seconds. scroll_up/down: wheel notches. type_text: the text. press_key: the key name."
+        },
+        "times": {
+          "type": "INTEGER",
+          "description": "How many times to repeat a key action (zoom_in, next_tab, go_back, press_key...). Default 1."
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "desktop_control",
+    "description": "Controls the DESKTOP itself: the wallpaper, and tidying the files on it. Actions: wallpaper (needs 'path') | wallpaper_url (needs 'url') | current_wallpaper | organize (needs 'mode': by_type or by_date) | clean | list | stats. For 'wallpaper', 'path' must be the real path of an existing image: copy it exactly from the tool that produced it (generate_image says where it saved), and if you do not have it, find the file with file_controller action='find' first. The change is reversible, so set it without asking first. It does ONLY those. For typing, clicking, hotkeys, screenshots or closing an application use computer_control; for opening one use open_app; for reading, moving or deleting files use file_controller. Read the status it returns: 'done' was confirmed, 'unverified' means it was requested and could not be checked - say that rather than claiming success - and 'ask' means nothing happened and the question goes to the user first.",
+    "brief": "Desktop wallpaper and desktop-file tidying. Actions: wallpaper (path) | wallpaper_url (url) | current_wallpaper | organize (mode) | clean | list | stats. Nothing else - typing and clicking are computer_control.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "wallpaper | wallpaper_url | current_wallpaper | organize | clean | list | stats",
+          "enum": [
+            "wallpaper",
+            "wallpaper_url",
+            "current_wallpaper",
+            "organize",
+            "clean",
+            "list",
+            "stats"
+          ]
+        },
+        "path": {
+          "type": "STRING",
+          "description": "For action='wallpaper': full path of the image file. '~' works, e.g. '~/Pictures/x.jpg'."
+        },
+        "url": {
+          "type": "STRING",
+          "description": "Image URL, for action='wallpaper_url'"
+        },
+        "mode": {
+          "type": "STRING",
+          "description": "by_type or by_date, for action='organize'"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "dev_agent",
+    "description": "The coding agent, running on the user's chosen coding model. mode='improve' changes an EXISTING project folder — the uploaded one or a path they name: fixes bugs, adds features, refactors. When a folder is uploaded, ANY request to add, create or change something is improve. Both modes run in the background with progress on screen. mode='build' creates a brand-new standalone project, only when no folder is meant. mode='status' reports what the coding agent is doing or did — use it whenever the user asks about the coding work. Before calling with improve or build, FIRST say one short sentence that you are handing it to the coding agent, then call it in the same turn.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "description": {
+          "type": "STRING",
+          "description": "build: what the project should do. improve: what to change in the folder, in the user's words"
+        },
+        "mode": {
+          "type": "STRING",
+          "description": "'improve' to change an existing folder, 'build' for a new project, 'status' to ask what the coding agent is doing or did"
+        },
+        "folder": {
+          "type": "STRING",
+          "description": "improve only: the folder path. Leave empty to use the folder in the upload box"
+        },
+        "language": {
+          "type": "STRING",
+          "description": "Programming language (default: python)"
+        },
+        "project_name": {
+          "type": "STRING",
+          "description": "Optional project folder name"
+        },
+        "timeout": {
+          "type": "INTEGER",
+          "description": "Run timeout in seconds (default: 30)"
+        }
+      },
+      "required": [
+        "description"
+      ]
+    }
+  },
+  {
+    "name": "file_controller",
+    "description": "Manages files and folders: list, create, delete, move, copy, rename, read, write, find, disk usage.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "list | create_file | create_folder | delete | move | copy | rename | read | write | find | largest | disk_usage | organize_desktop | info"
+        },
+        "path": {
+          "type": "STRING",
+          "description": "File/folder path or shortcut: desktop, downloads, documents, home"
+        },
+        "destination": {
+          "type": "STRING",
+          "description": "Destination path for move/copy"
+        },
+        "new_name": {
+          "type": "STRING",
+          "description": "New name for rename"
+        },
+        "content": {
+          "type": "STRING",
+          "description": "Content for create_file/write"
+        },
+        "name": {
+          "type": "STRING",
+          "description": "File name to search for"
+        },
+        "extension": {
+          "type": "STRING",
+          "description": "File extension to search (e.g. .pdf)"
+        },
+        "count": {
+          "type": "INTEGER",
+          "description": "Number of results for largest"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "file_processor",
+    "description": "Processes any file that the user has uploaded or dropped onto the interface. Use this when the user refers to an uploaded file and wants an action on it. Supports: images (describe/ocr/resize/compress/convert), PDFs (summarize/extract_text/to_word), Word docs & text files (summarize/fix/reformat/translate), CSV/Excel (analyze/stats/filter/sort/convert), JSON/XML (validate/format/analyze), code files (explain/review/fix/optimize/run/document/test), audio (transcribe/trim/convert/info), video (trim/extract_audio/extract_frame/compress/transcribe/info), archives (list/extract), presentations (summarize/extract_text). ALWAYS call this tool when a file has been uploaded and the user gives a command about it. If the user's command is ambiguous, pick the most logical action for that file type.",
+    "brief": "Reads a local file and answers questions about it or summarises it. Put the path in 'path' and what is wanted in 'query'.",
+    "tier": "core",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "file_path": {
+          "type": "STRING",
+          "description": "Full path to the uploaded file. Leave empty to use the currently uploaded file."
+        },
+        "action": {
+          "type": "STRING",
+          "description": "What to do with the file. Examples by type:\nimage: describe | ocr | resize | compress | convert | info\npdf: summarize | extract_text | to_word | info\ndocx/txt: summarize | fix | reformat | translate_hint | word_count | to_bullet\ncsv/excel: analyze | stats | filter | sort | convert | info\njson: validate | format | analyze | to_csv\ncode: explain | review | fix | optimize | run | document | test\naudio: transcribe | trim | convert | info\nvideo: trim | extract_audio | extract_frame | compress | transcribe | info | convert\narchive: list | extract\npptx: summarize | extract_text | analyze"
+        },
+        "instruction": {
+          "type": "STRING",
+          "description": "Free-form instruction if action doesn't cover it. E.g. 'translate this to Turkish', 'find all email addresses'"
+        },
+        "format": {
+          "type": "STRING",
+          "description": "Target format for conversion. E.g. 'mp3', 'pdf', 'csv', 'png'"
+        },
+        "width": {
+          "type": "INTEGER",
+          "description": "Target width for image resize"
+        },
+        "height": {
+          "type": "INTEGER",
+          "description": "Target height for image resize"
+        },
+        "scale": {
+          "type": "NUMBER",
+          "description": "Scale factor for image resize (e.g. 0.5)"
+        },
+        "quality": {
+          "type": "INTEGER",
+          "description": "Quality 1-100 for image/video compress"
+        },
+        "start": {
+          "type": "STRING",
+          "description": "Start time for trim: seconds or HH:MM:SS"
+        },
+        "end": {
+          "type": "STRING",
+          "description": "End time for trim: seconds or HH:MM:SS"
+        },
+        "timestamp": {
+          "type": "STRING",
+          "description": "Timestamp for video frame extraction HH:MM:SS"
+        },
+        "column": {
+          "type": "STRING",
+          "description": "Column name for CSV filter/sort"
+        },
+        "value": {
+          "type": "STRING",
+          "description": "Filter value for CSV filter"
+        },
+        "condition": {
+          "type": "STRING",
+          "description": "Filter condition: equals|contains|gt|lt"
+        },
+        "ascending": {
+          "type": "BOOLEAN",
+          "description": "Sort order for CSV sort (default: true)"
+        },
+        "save": {
+          "type": "BOOLEAN",
+          "description": "Save result to file (default: true)"
+        },
+        "destination": {
+          "type": "STRING",
+          "description": "Output folder for archive extract"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "flight_finder",
+    "description": "Searches Google Flights and speaks the best options.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "origin": {
+          "type": "STRING",
+          "description": "Departure city or airport code"
+        },
+        "destination": {
+          "type": "STRING",
+          "description": "Arrival city or airport code"
+        },
+        "date": {
+          "type": "STRING",
+          "description": "Departure date (any format)"
+        },
+        "return_date": {
+          "type": "STRING",
+          "description": "Return date for round trips"
+        },
+        "passengers": {
+          "type": "INTEGER",
+          "description": "Number of passengers (default: 1)"
+        },
+        "cabin": {
+          "type": "STRING",
+          "description": "economy | premium | business | first"
+        },
+        "save": {
+          "type": "BOOLEAN",
+          "description": "Save results to Notepad"
+        }
+      },
+      "required": [
+        "origin",
+        "destination",
+        "date"
+      ]
+    }
+  },
+  {
+    "name": "game_updater",
+    "description": "THE ONLY tool for ANY Steam or Epic Games request. Use for: installing, downloading, updating games, listing installed games, checking download status, scheduling updates. ALWAYS call directly for any Steam/Epic/game request. NEVER use browser_control or web_search for Steam/Epic.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "update | install | list | download_status | schedule | cancel_schedule | schedule_status (default: update)"
+        },
+        "platform": {
+          "type": "STRING",
+          "description": "steam | epic | both (default: both)"
+        },
+        "game_name": {
+          "type": "STRING",
+          "description": "Game name (partial match supported)"
+        },
+        "app_id": {
+          "type": "STRING",
+          "description": "Steam AppID for install (optional)"
+        },
+        "hour": {
+          "type": "INTEGER",
+          "description": "Hour for scheduled update 0-23 (default: 3)"
+        },
+        "minute": {
+          "type": "INTEGER",
+          "description": "Minute for scheduled update 0-59 (default: 0)"
+        },
+        "shutdown_when_done": {
+          "type": "BOOLEAN",
+          "description": "Shut down PC when download finishes"
+        }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "open_app",
+    "description": "Opens an application on this computer. Use whenever the user asks to open, launch or start any app or program. Put the application's name in 'app_name' exactly as the user said it. This tool answers immediately and confirms the launch in the background: on status=started say only that it is opening, never that it is open. If it does not appear, you will be told separately - relay that plainly rather than claiming success. Never say you opened something without calling this tool. To CLOSE an application use computer_control with action='close_app', not this tool. DO NOT use this tool to reach a WEB PAGE. 'open Chrome and go to YouTube', 'open YouTube', 'search the web' are all browser_control alone - it opens the browser itself. Calling open_app for the browser first and browser_control after it launches the browser TWICE, the second copy on a different profile, which is what puts a 'Who's using Chrome?' picker on the screen. Use this tool only when the user wants the application and nothing in it.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "app_name": {
+          "type": "STRING",
+          "description": "The application's REAL name, not the user's shorthand. Expand abbreviations and nicknames before passing them: 'wp' or 'whats' is 'WhatsApp', 'ig' is 'Instagram', 'vs code' is 'Visual Studio Code'. A two-letter fragment matches the wrong program - 'wp' finds WPS Office. Any application on the machine works; there is no fixed list."
+        }
+      },
+      "required": [
+        "app_name"
+      ]
+    }
+  },
+  {
+    "name": "reminder",
+    "description": "Sets a timed reminder using Task Scheduler.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "date": {
+          "type": "STRING",
+          "description": "Date in YYYY-MM-DD format"
+        },
+        "time": {
+          "type": "STRING",
+          "description": "Time in HH:MM format (24h)"
+        },
+        "message": {
+          "type": "STRING",
+          "description": "Reminder message text"
+        }
+      },
+      "required": [
+        "date",
+        "time",
+        "message"
+      ]
+    }
+  },
+  {
+    "name": "routines",
+    "description": "Routines — things the assistant does on its own when a moment comes. add: kind 'say' = speak a fixed reminder (text = the exact words, in the user's language); kind 'prompt' = carry out an instruction at that moment with your tools (text = the instruction, e.g. 'tell me the weather and my agenda'); kind 'task' = start a background task (text = the task, agent researcher|general, minutes). WHEN, one of: at 'YYYY-MM-DD HH:MM' (once) | time 'HH:MM' + optional days (numbers 1=Mon…7=Sun; weekdays = [1,2,3,4,5]) | monthly_day 1-31 + time | every_minutes + optional between 'HH:MM-HH:MM' | on 'startup' | on 'idle' + idle_minutes. The built-in routines are builtin 'briefing' (the opening briefing: news_topic, extra, news true/false), 'checkin' (unprompted check-ins: focuses = what they may be about) and 'news_watch' (the watched topics' headlines). list = all routines with ids; update = change one by id or builtin (enabled, when, text, and the options above); remove = delete by id; run_now = do it now; quiet_hours = 'HH:MM-HH:MM' when unprompted routines stay silent (empty turns it off). For a one-off reminder at a date and time, the reminder tool also shows a system notification.",
+    "brief": "Scheduled and automatic routines: add, list, update, remove, run_now, quiet_hours.",
+    "tier": "core",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "enum": [
+            "add",
+            "list",
+            "update",
+            "remove",
+            "run_now",
+            "quiet_hours"
+          ]
+        },
+        "id": {
+          "type": "STRING"
+        },
+        "builtin": {
+          "type": "STRING",
+          "enum": [
+            "briefing",
+            "checkin",
+            "news_watch"
+          ]
+        },
+        "name": {
+          "type": "STRING"
+        },
+        "kind": {
+          "type": "STRING",
+          "enum": [
+            "say",
+            "prompt",
+            "task"
+          ]
+        },
+        "text": {
+          "type": "STRING"
+        },
+        "at": {
+          "type": "STRING"
+        },
+        "time": {
+          "type": "STRING"
+        },
+        "days": {
+          "type": "ARRAY",
+          "items": {
+            "type": "INTEGER"
+          }
+        },
+        "monthly_day": {
+          "type": "INTEGER"
+        },
+        "every_minutes": {
+          "type": "INTEGER"
+        },
+        "between": {
+          "type": "STRING"
+        },
+        "on": {
+          "type": "STRING",
+          "enum": [
+            "startup",
+            "idle"
+          ]
+        },
+        "idle_minutes": {
+          "type": "INTEGER"
+        },
+        "cooldown_minutes": {
+          "type": "INTEGER"
+        },
+        "enabled": {
+          "type": "BOOLEAN"
+        },
+        "quiet": {
+          "type": "BOOLEAN"
+        },
+        "deliver": {
+          "type": "STRING",
+          "enum": [
+            "voice",
+            "panel",
+            "silent"
+          ]
+        },
+        "agent": {
+          "type": "STRING"
+        },
+        "minutes": {
+          "type": "INTEGER"
+        },
+        "news_topic": {
+          "type": "STRING"
+        },
+        "news": {
+          "type": "BOOLEAN"
+        },
+        "extra": {
+          "type": "STRING"
+        },
+        "focuses": {
+          "type": "ARRAY",
+          "items": {
+            "type": "STRING"
+          }
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "send_message",
+    "description": "Sends a text message via WhatsApp, Telegram, or another messaging platform. Write 'message_text' in the USER'S OWN LANGUAGE, exactly what they asked to be said. This tool answers immediately and sends in the background. On status=started say only that you are sending it, never that it is sent. The result follows separately: status=done means it was confirmed delivered to the conversation, status=unverified means the keystrokes went out and NOBODY can confirm it arrived - say exactly that - and status=failed means it did not go. Never tell the user a message was sent unless the result said status=done.",
+    "tier": "core",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "receiver": {
+          "type": "STRING",
+          "description": "Recipient contact name"
+        },
+        "message_text": {
+          "type": "STRING",
+          "description": "The message to send"
+        },
+        "platform": {
+          "type": "STRING",
+          "description": "Platform: WhatsApp, Telegram, etc."
+        }
+      },
+      "required": [
+        "receiver",
+        "message_text",
+        "platform"
+      ]
+    }
+  },
+  {
+    "name": "video_player",
+    "description": "Puts a VIDEO or a PICTURE on the assistant's own display, where the avatar normally is - and closes it, mutes it or unmutes it. Use it whenever the user wants to watch or look at something on screen, whatever words or language they use for it. 'source' accepts the full path of a file on this computer, a direct video URL, a YouTube link, or a description to search YouTube for. For a file, copy its path exactly from the tool that produced it; if you do not have the path, find the file with file_controller action='find' first - never invent one. Pictures (including one generate_image just made) are shown; videos play. Set 'source_type' from what the user MEANT: 'file' when it is something on their own computer, 'web' when they mean YouTube or something online, 'auto' when they did not say. Video always starts MUTED - only call action='unmute' when the user actually asks to hear it. action='stop' closes a picture as well. While a video is on the display: 'forward' / 'back' with seconds ('skip 30 seconds' -> forward, seconds=30; no amount = 10), 'seek_to' with position ('go to 1:20' -> position='1:20'), 'pause', 'resume'. When it answers 'status=opening', say in one short sentence that you are putting it on the display, and do not wait or call it again. If it fails, report why; never open a browser instead unless the user asks for that. Do NOT use 'youtube_video' for this: that plugin works in the web browser and never shows anything on this display.",
+    "brief": "Shows a picture or plays a video on the HUD - a file path on this computer, a URL, a YouTube link, or a description to search for. source_type: file | web | auto.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "'play' (default; also shows pictures), 'stop' to close it, 'unmute' to turn the sound on, 'mute' to silence it, 'forward' / 'back' by seconds, 'seek_to' a position, 'pause', 'resume'.",
+          "enum": [
+            "play",
+            "stop",
+            "mute",
+            "unmute",
+            "forward",
+            "back",
+            "seek_to",
+            "pause",
+            "resume"
+          ]
+        },
+        "seconds": {
+          "type": "NUMBER",
+          "description": "For forward / back: how many seconds (default 10)."
+        },
+        "position": {
+          "type": "STRING",
+          "description": "For seek_to: where to go, as minutes:seconds ('1:20') or seconds."
+        },
+        "source": {
+          "type": "STRING",
+          "description": "For action='play': a file path on this computer, a direct video URL, a YouTube link, or what to search YouTube for. Pass what the user actually named, in their own words."
+        },
+        "source_type": {
+          "type": "STRING",
+          "description": "Where the user means it is: 'file' on this computer, 'web' for YouTube or online, 'auto' if they did not say.",
+          "enum": [
+            "auto",
+            "file",
+            "web"
+          ]
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "weather_report",
+    "description": "Gives the weather report to user",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "city": {
+          "type": "STRING",
+          "description": "City name"
+        }
+      },
+      "required": [
+        "city"
+      ]
+    }
+  },
+  {
+    "name": "web_search",
+    "description": "Searches the web. Use for ANY question about current facts, events, prices, or topics — always prefer this over guessing. Modes: 'search' (default), 'news' (latest headlines on a topic), 'research' (deep comprehensive answer), 'price' (product cost lookup), 'compare' (side-by-side comparison of items).",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "query": {
+          "type": "STRING",
+          "description": "Search query or topic"
+        },
+        "mode": {
+          "type": "STRING",
+          "description": "search | news | research | price | compare"
+        },
+        "items": {
+          "type": "ARRAY",
+          "items": {
+            "type": "STRING"
+          },
+          "description": "Items to compare (compare mode)"
+        },
+        "aspect": {
+          "type": "STRING",
+          "description": "Comparison aspect: price | specs | reviews | features"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "youtube_video",
+    "description": "Controls YouTube. Use for: playing videos, summarizing a video's content, getting video info, or showing trending videos.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "action": {
+          "type": "STRING",
+          "description": "play | summarize | get_info | trending (default: play)"
+        },
+        "query": {
+          "type": "STRING",
+          "description": "Search query for play action"
+        },
+        "save": {
+          "type": "BOOLEAN",
+          "description": "Save summary to Notepad (summarize only)"
+        },
+        "region": {
+          "type": "STRING",
+          "description": "Country code for trending e.g. TR, US"
+        },
+        "url": {
+          "type": "STRING",
+          "description": "Video URL for get_info action"
+        }
+      },
+      "required": []
+    }
+  }
+]

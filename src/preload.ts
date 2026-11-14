@@ -1,0 +1,8 @@
+import { contextBridge,ipcRenderer } from 'electron';
+const invokeChannels=new Set(['settings','system-status','face-mesh','save-settings','command','interrupt','mute','wake','wake-toggle','wake-install','ptt-toggle','ptt','confirm','remote','revoke-devices','pick-file','pick-folder','attach-file','clear-file','clipboard-read','clipboard-write','open-path','open-external','memory','memory-delete','tasks','agents','task-start','task-cancel','task-steer','routines','routine-add','routine-update','routine-delete','quiet-hours','providers','provider-save','provider-test','provider-models','voices','plugins','plugin-toggle','shutdown','window']);
+const eventChannels=new Set(['log','state','content','level','audio','audio-stop','mouth-text','video','image','video-stop','video-muted','video-seek','video-pause','camera','quiz','review','code-job','confirm','confirm-hide','wake','settings','accent','file','muted','phone-connected','memory-changed','reconfigure','request']);
+contextBridge.exposeInMainWorld('jarvis',{
+ invoke:(channel:string,...args:unknown[])=>invokeChannels.has(channel)?ipcRenderer.invoke('hud:'+channel,...args):Promise.reject(Error('Unknown IPC channel')),
+ send:(channel:string,...args:unknown[])=>{if(['mic','video-state','response','quiz-answer','ready'].includes(channel))ipcRenderer.send('hud:'+channel,...args);},
+ on:(callback:(channel:string,data:any)=>void)=>{const listeners=[...eventChannels].map(channel=>{const fn=(_event:Electron.IpcRendererEvent,data:any)=>callback(channel,data);ipcRenderer.on('hud:'+channel,fn);return [channel,fn] as const;});return ()=>{for(const [channel,fn] of listeners)ipcRenderer.removeListener('hud:'+channel,fn);};}
+});

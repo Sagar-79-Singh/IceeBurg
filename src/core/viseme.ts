@@ -1,0 +1,12 @@
+import { mono,clamp } from './util';
+export type Viseme={level:number;openness:number;width:number};
+export function pcmLevel(pcm:Buffer){let s=0,n=0;for(let i=0;i+1<pcm.length;i+=2){const v=pcm.readInt16LE(i);s+=v*v;n++;}const r=Math.sqrt(s/(n||1));return r<=60?0:clamp((r-60)/2540,0,1);}
+export function pcmVisemes(pcm:Buffer,sr=24000):Viseme[]{const count=Math.floor(pcm.length/2);if(count<1024)return [];const out:Viseme[]=[];const N=256;for(let start=0;start<count;start+=480){const end=Math.min(start+480,count);const level=pcmLevel(pcm.subarray(start*2,end*2));if(!level){out.push({level:0,openness:0,width:0});continue;}const seg=Float64Array.from({length:N},(_,i)=>count>start+i?pcm.readInt16LE((start+i)*2)/32768:0);const mean=seg.reduce((a,b)=>a+b,0)/N;const bands=[0,0,0,0,0];for(let k=1;k<N/2;k++){let re=0,im=0;const f=k*sr/N;for(let t=0;t<N;t++){const w=.5-.5*Math.cos(2*Math.PI*t/(N-1));re+=(seg[t]-mean)*w*Math.cos(2*Math.PI*k*t/N);im-=(seg[t]-mean)*w*Math.sin(2*Math.PI*k*t/N);}const mag=Math.hypot(re,im);if(f>=150&&f<450)bands[0]+=mag;else if(f>=450&&f<1100)bands[1]+=mag;else if(f>=600&&f<1300)bands[2]+=mag;else if(f>=1700&&f<3200)bands[3]+=mag;else if(f>=3800&&f<8000)bands[4]+=mag;}out.push({level,openness:bands[1]/(bands[0]+bands[1]+1e-6),width:(bands[3]-bands[2])/(bands[3]+bands[2]+1e-6)});}return out;}
+export const SHAPES=['sil','A','E','I','O','U','M','F','L','S','T','R'];
+export function shapeOf(v:Viseme){if(v.level<.035)return 'sil';if(v.width>.35)return v.openness>.5?'E':'I';if(v.width<-.3)return v.openness>.45?'O':'U';return v.openness>.6?'A':v.openness>.25?'E':'M';}
+export class VisemeStream {
+ queue:{at:number;v:Viseme}[]=[];cursor=0;last:Viseme={level:0,openness:0,width:0};lastAt=0;
+ reset(){this.queue=[];this.cursor=0;this.last={level:0,openness:0,width:0};}
+ push(pcm:Buffer,playAt:number,sr=24000){const frames=pcmVisemes(pcm,sr);const now=mono();this.cursor=Math.max(playAt,now-.15,this.cursor);for(const v of frames){this.queue.push({at:this.cursor,v});this.cursor+=.045+.06*(1-v.level);}this.queue=this.queue.filter(f=>f.at>now-.6).slice(-600);}
+ sample(){const now=mono();while(this.queue.length&&this.queue[0].at<=now)this.last=this.queue.shift()!.v;if(now-this.lastAt>.1)this.lastAt=now;const v=now-this.lastAt<.15?this.last:{level:0,openness:0,width:0};return {...v,shape:shapeOf(v),coverage:this.queue.length?Math.min(1,(this.cursor-now)/.3):0};}
+}

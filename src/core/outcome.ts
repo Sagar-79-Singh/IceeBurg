@@ -1,0 +1,13 @@
+import type { Dict } from './types';
+export const DONE='done', UNVERIFIED='unverified', FAILED='failed', ASK='ask', STARTED='started';
+const render = (v: any) => { if (typeof v === 'boolean') return String(v); const s=String(v).replace(/"/g,"'").replace(/\n/g,' ').trim(); return !s || s.includes(' ') ? `"${s}"` : s; };
+const line = (status: string, action: string, facts: Dict) => [`status=${status}`,`action=${action}`,...Object.entries(facts).filter(([,v])=>v!=null).map(([k,v])=>`${k}=${render(v)}`)].join(' ');
+export const done = (action: string, facts: Dict = {}) => line(DONE,action,facts);
+export const started = (action: string, facts: Dict = {}) => line(STARTED,action,facts)+" -- UNDER WAY, not finished. Say in one short sentence, in the user's own language, that it is being done. Do not say it is complete, and do not call this tool again to check.";
+export const unverified = (action: string, reason: string, facts: Dict = {}) => line(UNVERIFIED,action,{...facts,reason})+' -- NOT confirmed. Tell the user plainly that you asked and cannot confirm it worked, and say what they can check. Do NOT say it is done.';
+export const failed = (action: string, reason: string, facts: Dict = {}) => line(FAILED,action,{...facts,reason})+' -- This did NOT happen. Tell the user so in their own language, with the reason. Do not claim any part of it succeeded.';
+export const ask = (action: string, question: string, facts: Dict = {}) => line(ASK,action,{...facts,question})+' -- NOTHING was done yet. Put this question to the user in their own language and wait for their answer before calling again.';
+export const untrusted = (source: string, content: string) => `<<<UNTRUSTED source=${source}>>>\n${String(content).replace(/<<<\s*(?:END\s+)?UNTRUSTED[^>]*>>>/gi,'[nested boundary marker]')}\n<<<END UNTRUSTED>>>`;
+export const unwrap = (text: string) => text.replace(/^<<<UNTRUSTED source=[^>]+>>>\n?/,'').replace(/\n?<<<END UNTRUSTED>>>$/,'');
+export const isProblem = (text: string) => [FAILED,UNVERIFIED,ASK].some(s=>text.startsWith(`status=${s} `));
+export const statusOf = (text: string) => text.match(/^status=(\w+)/)?.[1] || '';

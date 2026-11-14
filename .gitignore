@@ -48,3 +48,10 @@ desktop.ini
 logs/
 downloads/
 screenshots/
+
+# Node / TypeScript
+node_modules/
+*.tsbuildinfo
+.arena/
+cloud_state/
+reports/

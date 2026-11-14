@@ -1,0 +1,125 @@
+{
+  "name": "iceeburg",
+  "version": "1.0.0",
+  "description": "MARK LVII \u2014 cross-platform personal AI assistant, now in TypeScript and Electron",
+  "main": "build/main.js",
+  "author": {
+    "name": "Sagar-79-Singh",
+    "email": "s07909084193@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sagar-79-Singh/IceeBurg.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.cjs",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb --publish never",
+    "dist:win": "npm run build && electron-builder --win nsis zip --publish never",
+    "dist:mac": "npm run build && electron-builder --mac zip --publish never",
+    "postinstall": "node scripts/postinstall.mjs",
+    "fetch:electron": "node scripts/fetch-electron.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "3.3.0",
+    "adm-zip": "0.5.16",
+    "cheerio": "1.1.2",
+    "docx": "9.5.1",
+    "duck-duck-scrape": "2.2.7",
+    "exceljs": "4.4.0",
+    "jimp": "0.22.12",
+    "mammoth": "1.11.0",
+    "pdf-parse": "2.4.5",
+    "playwright": "1.56.1",
+    "qrcode": "1.5.4",
+    "selfsigned": "3.0.1",
+    "systeminformation": "5.27.11",
+    "ws": "8.18.3",
+    "yaml": "2.8.1",
+    "youtube-transcript": "1.2.1"
+  },
+  "optionalDependencies": {
+    "@nut-tree-fork/nut-js": "4.2.6",
+    "onnxruntime-node": "1.23.2",
+    "openwakeword-js": "0.1.27",
+    "sherpa-onnx-node": "1.12.40"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "0.5.7",
+    "@types/node": "22.19.1",
+    "@types/qrcode": "1.5.6",
+    "@types/ws": "8.18.1",
+    "electron": "39.2.7",
+    "electron-builder": "26.0.12",
+    "esbuild": "0.27.0",
+    "typescript": "5.9.3",
+    "extract-zip": "2.0.1",
+    "@electron/get": "2.0.3"
+  },
+  "build": {
+    "appId": "com.sagar79singh.iceeburg",
+    "productName": "IceeBurg",
+    "artifactName": "IceeBurg-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "actions/**/*",
+      "src/actions/declarations.json",
+      "assets/**/*",
+      "agents/**/*",
+      "dashboard/static/**/*",
+      "plugins/*.cjs",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**/*",
+      "node_modules/onnxruntime-web/**/*",
+      "node_modules/onnxruntime-common/**/*",
+      "node_modules/sherpa-onnx-node/**/*",
+      "node_modules/sherpa-onnx-*/**/*",
+      "node_modules/@nut-tree-fork/**/*",
+      "node_modules/openwakeword-js/**/*"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "assets/jarvis.png",
+      "synopsis": "Personal AI assistant"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "icon": "assets/jarvis.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "mac": {
+      "target": [
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "assets/jarvis.png",
+      "identity": null
+    },
+    "publish": null
+  }
+}

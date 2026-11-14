@@ -1,0 +1,37 @@
+export type Dict = Record<string, any>;
+export type Schema = { type: string; properties?: Record<string, Schema>; required?: string[]; items?: Schema; enum?: string[]; description?: string; [key: string]: any };
+export type Declaration = { name: string; description: string; parameters: Schema; behavior?: 'BLOCKING' | 'NON_BLOCKING'; scheduling?: 'WHEN_IDLE' | 'SILENT' | 'INTERRUPT'; tier?: 'core' | 'extra'; brief?: string };
+export type ToolCall = { id: string; name: string; args: Dict; sig?: string };
+export type Turn = { role: 'user' | 'model' | 'tool'; text?: string; calls?: ToolCall[]; results?: { id: string; name: string; result: string }[] };
+export type Answer = { text: string; calls: ToolCall[] };
+export type Part = { text?: string; inlineData?: { mimeType: string; data: string }; inline_data?: { mime_type: string; data: string }; functionCall?: Dict; functionResponse?: Dict; thought?: boolean; thoughtSignature?: string };
+export interface Player {
+  writeLog(text: string): void;
+  showContent(title: string, text: string): void;
+  requestSay?(text: string): void;
+  setState(state: string): void;
+  showVideo(source: string, title?: string, muted?: boolean, audioSource?: string): void;
+  showImage(source: string, title?: string): void;
+  stopVideo(): void;
+  setVideoMuted(muted: boolean): void;
+  videoState(): Dict | Promise<Dict>;
+  videoIsPlaying(): boolean | Promise<boolean>;
+  seekVideo(seconds: number, relative?: boolean): void;
+  pauseVideo(paused: boolean): void;
+  startCameraStream(): void;
+  stopCameraStream(): void;
+  showQuiz?(topic: string, questions: Dict[], grade?: Function): void;
+  showReview?(title: string, summary: string, findings: Dict[], unclear?: string[]): void;
+  showCodeJob?(job: Dict): void;
+  showConfirm?(title: string, detail: string): void;
+  hideConfirm?(): void;
+  currentFile?: string;
+  assistantName?: string;
+  muted?: boolean;
+  runTool?(name: string, args: Dict): Promise<string>;
+  toolCatalog?(): Declaration[];
+}
+export type Context = { player?: Player; speak?: (text: string) => void; response?: any; sessionMemory?: Dict };
+export type Handler = (parameters: Dict, context: Context) => string | Promise<string>;
+export type Action = Declaration & { handler: Handler; file?: string };
+export const errorMessage = (e: unknown): string => e instanceof Error ? e.message : String(e);
